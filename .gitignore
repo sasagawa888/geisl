@@ -1,0 +1,5 @@
+*.o
+*.org
+eisl
+edlis
+ex/
