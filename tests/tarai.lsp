@@ -26,7 +26,7 @@
                 (fib* (- n 2.0))))))
 
 (defun ack (m n)
-    ;(the <fixnum> m)(the <fixnum> n)
+    (the <fixnum> m)(the <fixnum> n)
     (cond ((= m 0) (+ n 1))
           ((= n 0) (ack (- m 1) 1))
           (t (ack (- m 1) (ack m (- n 1)))) ))
@@ -47,13 +47,14 @@
     (if (not (= 0 n))
         (cons n (listn (- n 1))) ))
 
+#|
 (defconstant ll-18 (listn 18))
 (defconstant ll-12 (listn 12))
 (defconstant ll-6 (listn 6))
 (defconstant ll-32 (listn 32))
 (defconstant ll-16 (listn 16))
 (defconstant ll-8 (listn 8))
-
+|#
 (defmacro shorterp (x y)
     `(< (length ,x) (length ,y)) )
 

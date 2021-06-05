@@ -312,7 +312,7 @@ int main(int argc, char *argv[]){
                 repl_flag = false;
                 break;
             case 'v':
-                printf("Easy-ISLisp(GPU) Ver%1.2f\n", VERSION);
+                printf("GEasy-ISLisp Ver%1.2f\n", VERSION);
                 exit(EXIT_SUCCESS);
             case 'h':
                 usage();
@@ -330,7 +330,7 @@ int main(int argc, char *argv[]){
         }
     }
     if(greeting_flag == 1)
-        printf("Easy-ISLisp(GPU) Ver%1.2f\n", VERSION);
+        printf("GEasy-ISLisp Ver%1.2f\n", VERSION);
     repl:
     if(ret == 0)
         while(1){
