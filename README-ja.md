@@ -64,13 +64,13 @@ GEISLはCUDA利用による高速な行列、テンソル計算、それを応�
 
 ## 翻訳系
 
-EISLは翻訳系 (compiler) を備えています。
+GEISLは翻訳系 (compiler) を備えています。
 GCC向けのソースコード及び〔GCCを介して〕オブジェクトコードを生成します。
 
 ### 用法
 
 ```consloe
-$ eisl -c  # -cオプションを付けて起動する。
+$ geisl -c  # -cオプションを付けて起動する。
 ```
 又は
 ```lisp
@@ -84,36 +84,35 @@ $ eisl -c  # -cオプションを付けて起動する。
 ### 使用例
 
 ```console
-eisl -c
-Easy-ISLisp Ver1.6
+$ geisl
+GEasy-ISLisp Ver0.90
+> (import "compiler")
+T
 > (compile-file "tests/tarai.lsp")
 type inference
 initialize
 pass1
 pass2
-compiling PACK
-compiling TARAI
-compiling FIB
-compiling FIB*
-compiling ACK
-compiling GFIB
-compiling TAK
-compiling LISTN
-compiling TAKL
-compiling CTAK
-compiling CTAK-AUX
-
+compiling TARAI 
+compiling TARAI* 
+compiling FIB 
+compiling FIB* 
+compiling ACK 
+compiling GFIB 
+compiling TAK 
+compiling LISTN 
+compiling TAKL 
+compiling CTAK 
+compiling CTAK-AUX 
 finalize
-invoke GCC
+invoke CC
 T
 > (load "tests/tarai.o")
 T
 > (time (tarai 12 6 0))
-Elapsed Time(second)=0.024106
+Elapsed Time(second)=0.025118
 <undef>
-> (time (ack 4 1))
-Elapsed Time(second)=3.728262
-<undef>
+> 
 
 ```
 

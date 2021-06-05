@@ -1,7 +1,7 @@
 # GEasy-ISLisp
 
 GEasy-ISLisp(GEISL) is an interpreter and compiler compatible with ISLisp standard.
-GEISL is EISL for GPGPU. It runs with CUDA.
+GEISL is for GPGPU. It runs with CUDA using GPU.
 GEISL was written by Kenichi Sasagawa
 
 
@@ -16,33 +16,33 @@ In Linux  type "make". And type "sudo make install".
 # Invoke
 
 ```
-eisl 
+geisl 
 ```
 
 In the Linux version,the REPL is editable. If you do not desire to use the editable REPL, invoke with -r option.
 
 ```
-eisl -r
+geisl -r
 ```
 
 If you desire to start after reading file, invoke with -l option.
 e.g.
 
 ```
-eisl -l foo.lsp 
+geisl -l foo.lsp 
 ```
 
-Other options, see EISL -h
+Other options, see GEISL -h
 
 ```
 $ eisl -h
 List of options:
--c           -- EISL starts after reading compiler.lsp.
--f           -- EISL starts after reading formatter.lsp.
+-c           -- GEISL starts after reading compiler.lsp.
+-f           -- GEISL starts after reading formatter.lsp.
 -h           -- display help.
--l filename  -- EISL starts after reading the file.
--r           -- EISL does not use editable REPL.
--s filename  -- EISL runs the file with script mode.
+-l filename  -- GEISL starts after reading the file.
+-r           -- GEISL does not use editable REPL.
+-s filename  -- GEISL runs the file with script mode.
 -v           -- dislplay version number.
 ```
 
