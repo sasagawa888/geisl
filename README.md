@@ -35,7 +35,7 @@ geisl -l foo.lsp
 Other options, see GEISL -h
 
 ```
-$ eisl -h
+$ geisl -h
 List of options:
 -c           -- GEISL starts after reading compiler.lsp.
 -f           -- GEISL starts after reading formatter.lsp.

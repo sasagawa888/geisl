@@ -37,7 +37,7 @@ NVIDIA GTX-1650
        ((< i 0) t)
        (test1)))
 
-Easy-ISLisp Ver1.77
+GEasy-ISLisp Ver0.90
 > (time (test1))
 Elapsed Time(second)=0.074256
 <undef>
