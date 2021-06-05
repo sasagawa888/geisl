@@ -14,7 +14,7 @@
         (tarai* (tarai* (- x 1.0) y z) (tarai* (- y 1.0) z x) (tarai* (- z 1.0) x y)) ))
 
 (defun fib (n)
-    ;(the <fixnum> n)
+    (the <fixnum> n)
     (cond ((= n 1) 1)
           ((= n 2) 1)
           (t (+ (fib (- n 1)) (fib (- n 2)))) ))
@@ -47,14 +47,14 @@
     (if (not (= 0 n))
         (cons n (listn (- n 1))) ))
 
-#|
+
 (defconstant ll-18 (listn 18))
 (defconstant ll-12 (listn 12))
 (defconstant ll-6 (listn 6))
 (defconstant ll-32 (listn 32))
 (defconstant ll-16 (listn 16))
 (defconstant ll-8 (listn 8))
-|#
+
 (defmacro shorterp (x y)
     `(< (length ,x) (length ,y)) )
 
