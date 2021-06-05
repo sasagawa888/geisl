@@ -316,7 +316,7 @@ double tarai(double x, double y, double z){
         (let ((sexp nil))
            (while (setq sexp (read instream nil nil))
               (cond ((and (consp sexp) (eq (car sexp) 'defmodule)) (module-check sexp))
-                    (t (check-args-count sexp) (find-catch-block-tag sexp))))
+                    (t (check-args-count sexp) (find-catch-block-tag (macroexpand-all sexp)))))
            (close instream)
            (setq instream nil)))
     
@@ -325,14 +325,20 @@ double tarai(double x, double y, double z){
               (body (cdr (cdr x)) (cdr body)) )
              ((null body)
               t )
-             (let ((sexp (substitute (car body) name nil)))
+             (let ((sexp (modulesubst (car body) name nil)))
                 (check-args-count sexp)
-                (find-catch-block-tag sexp))))
+                (find-catch-block-tag (macroexpand-all sexp))))
+        (eval x))
 
     (defun check-args-count (x)
         (cond ((eq (car x) 'defun)
                (when (assoc (elt x 1) function-arg) (error* "duplicate definition" (elt x 1)))
                (setq function-arg (cons (cons (elt x 1) (count-args (elt x 2))) function-arg)))
+              ((eq (car x) 'defpattern)
+               (when (assoc (elt x 1) function-arg) (error* "duplicate definition" (elt x 1)))
+               (setq function-arg (cons (cons (elt x 1) -1) function-arg)))
+              ((eq (car x) 'import)
+               (eval x))
               ((eq (car x) 'defmacro)
                (unless (symbolp (elt x 1)) (error* "defmacro: not symbol" (elt x 1)))
                (unless (listp (elt x 2)) (error* "defmacro: not list" (elt x 2)))
@@ -420,6 +426,7 @@ double tarai(double x, double y, double z){
     
     (defun compile (x)
         (cond ((eq (car x) 'defun) (comp-defun x))
+              ((eq (car x) 'defpattern) (comp-defun (macroexpand-all x)))
               ((eq (car x) 'defglobal) (comp-defglobal x))
               ((eq (car x) 'defdynamic) (comp-defdynamic x))
               ((eq (car x) 'defconstant) (comp-defconstant x))
@@ -743,11 +750,14 @@ double tarai(double x, double y, double z){
     
     (defun comp-defmodule (x)
         (let ((name (car (cdr x)))
-              (body (cdr (cdr x))) )
+              (body (cdr (cdr x)))
+              (public nil) )
            (for ((s body (cdr s)))
                 ((null s)
                  t )
-                (compile (substitute (car s) name nil)))))
+                (if (and (consp (car s)) (eq (car (car s)) 'defpublic))
+                    (setq public (cons (elt (car s) 1) public)))
+                (compile (modulesubst (car s) name public)))))
     
     (defun comp-defun0 (x)
         (let* ((name (elt x 1))
@@ -836,12 +846,12 @@ double tarai(double x, double y, double z){
                (type-gen-arg2 code2 args (argument-type name)))
            (format code2 "{~%")
            (format code2 "int res;~%")
-           (cond ((and (not optimize-enable) (has-tail-recur-p body name))
+           (cond ((and (not optimize-enable) (has-tail-recur-p (macroexpand-all body) name))
                   ;;for tail recursive tempn var;
                   (gen-arg3 (length args)))
-                 ((and optimize-enable (has-tail-recur-p body name))
+                 ((and optimize-enable (has-tail-recur-p (macroexpand-all body) name))
                   (type-gen-arg3 (length args) (argument-type name))))
-           (cond ((has-tail-recur-p body name)
+           (cond ((has-tail-recur-p (macroexpand-all body) name)
                   (format-object code2 (conv-name name) nil)
                   (format code2 "loop:~%")))
            (cond ((not optimize-enable) (gen-shelterpush code2 args) (gen-checkgc)))
@@ -931,7 +941,7 @@ double tarai(double x, double y, double z){
             (format code2 "int res;~%")
             (gen-shelterpush code2 args)
             (gen-checkgc)
-            (comp-defgeneric-body method nil)
+            (comp-defgeneric-body method nil args)
             (gen-shelterpop code2 (reverse args))
             (format code2 "return(res);}~%")))
     
@@ -945,12 +955,12 @@ double tarai(double x, double y, double z){
               (t (error* "defgeneric" x))))
     
     ;;method priority :around=11 :before=12 :priority=13 :after=14
-    (defun comp-defgeneric-body (x after)
+    (defun comp-defgeneric-body (x after args)
         (cond ((null x) t)
               ((null (cdr x))
                (let* ((varbody (get-method-body (car x)))
-                      (varlis (car varbody))
-                      (body (cdr varbody))
+                      (varlis (alpha-conv-varlis (car varbody) args))
+                      (body (alpha-conv-method (cdr varbody) (method-varlis-to-substlist (car varbody) args)))
                       (priority (get-method-priority (car x))) )
                    (if (and (= priority 14) (not priority))
                        (format code2 "after:~%"))
@@ -963,8 +973,8 @@ double tarai(double x, double y, double z){
                    (format code2 "}~%")))
               (t
                (let* ((varbody (get-method-body (car x)))
-                      (varlis (car varbody))
-                      (body (cdr varbody))
+                      (varlis (alpha-conv-varlis (car varbody) args))
+                      (body (alpha-conv-method (cdr varbody) (method-varlis-to-substlist (car varbody) args)))
                       (priority (get-method-priority (car x))) )
                    (if (and (= priority 14) (not after))
                        (format code2 "after:~%"))
@@ -979,7 +989,46 @@ double tarai(double x, double y, double z){
                    (format code2 "}~%")
                    (comp-defgeneric-body (cdr x) (if (= priority 14)
                                                      t
-                                                     after))))))
+                                                     after) args)))))
+    
+    ;; ((x <integer>) (y <integer>)) (a b) -> ((a <integer>) (b <integer>))
+    ;; ((x <integer>) y) (a b) -> ((a <integer>) b)
+    (defun alpha-conv-varlis (x y)
+        (cond ((null x) nil)
+              ((symbolp (car x))
+               (cons (car y) (alpha-conv-varlis (cdr x) (cdr y))))
+              (t  
+               (cons (list (car y) (elt (car x) 1)) (alpha-conv-varlis (cdr x) (cdr y))))))
+
+
+    ;; ((x <integer>) (y <integer>)) (a b) -> ((x . a) (y . b))
+    ;; ((x <integer>) y) (a b) -> ((x . a) (y . b))
+    (defun method-varlis-to-substlist (x y)
+        (cond ((null x) nil)
+              ((symbolp (car x))
+               (cons (cons (car x) (car y))
+                     (method-varlis-to-substlist (cdr x) (cdr y))))
+              (t
+               (cons (cons (car (car x)) (car y))
+                     (method-varlis-to-substlist (cdr x) (cdr y))))))
+
+    ;; (COND ((= N 1) 1) ((= N 2) 1) (T (+ (GFIB (- N 1)) (GFIB (- N 2)))))) ((n . a)) -> 
+    ;; (COND ((= a 1) 1) ((= a 2) 1) (T (+ (GFIB (- a 1)) (GFIB (- a 2))))))
+    (defun alpha-conv-method (x y)
+        (cond ((null x) nil)
+              ((and (symbolp x) (alpha-var x y)) (alpha-var x y))
+              ((atom x) x)
+              (t (cons (alpha-conv-method (car x) y)
+                       (alpha-conv-method (cdr x) y)))))
+
+    ;; if x is alpha-conv variable substitute 
+    ;; else return nil
+    ;; x ((x . a)) -> a
+    ;; y ((x . a)) -> nil
+    (defun alpha-var (x y)
+        (cond ((null y) nil)
+              ((eq x (car (car y))) (cdr (car y)))
+              (t (alpha-var x (cdr y)))))
     
     (defun method-need-return-p (x)
         (cond ((null (cdr x)) t)
@@ -1270,52 +1319,70 @@ double tarai(double x, double y, double z){
                  (t
                     (format stream "({int ")
                  (for ((ls (cdr x) (cdr ls))
-                        (n 1 (+ n 1)) )
+                        (m 1 (+ m 1)) )
                       ((null ls)
                         t )
                       (format stream "arg")
-                      (format-integer stream n 10)
+                      (format-integer stream m 10)
                     (format stream ","))
                     (format stream "res;~%")
                     (for ((ls (cdr x) (cdr ls))
-                          (n 1 (+ n 1)) )
+                          (m 1 (+ m 1)) )
                          ((null ls)
                            t )
                          (format stream "arg")
-                         (format-integer stream n 10)
+                         (format-integer stream m 10)
                          (format stream " = ")
                          (comp stream (car ls) env args nil name global test clos)
                          (format stream ";~%")
                          (format stream "Fshelterpush(arg")
-                         (format-integer stream n 10)
+                         (format-integer stream m 10)
                          (format stream ");~%"))))
            (format stream "res = ")
            (format-object stream (conv-name (car x)) nil)
            (format stream "(")
-           (comp-funcall-clang-left-to-right1 stream 1 (length (cdr x)))
+           (comp-funcall-clang-left-to-right1 stream 1 n (length (cdr x)))
            (format stream ");~%")
            (cond ((not (null (cdr x)))
                   (for ((ls (cdr x) (cdr ls))
-                        (n (length (cdr x)) (- n 1)) )
+                        (m (length (cdr x)) (- m 1)) )
                        ((null ls)
                          t )
                        (format stream "arg")
-                       (format-integer stream n 10)
+                       (format-integer stream m 10)
                        (format stream "=Fshelterpop();~%"))))
            (format stream ";res;})"))
     )
 
-    (defun comp-funcall-clang-left-to-right1 (stream m n)
-        (cond ((> m n) )
-              ((= m n)
-               (format stream "arg")
-               (format-integer stream m 10))
-              (t
-               (format stream "arg")
+    (defun comp-funcall-clang-left-to-right1 (stream m n o)
+        (cond ((>= n 0)
+               (cond ((> m n) )
+                     ((= m n)
+                      (format stream "arg")
+                      (format-integer stream m 10))
+                     (t
+                      (format stream "arg")
+                      (format-integer stream m 10)
+                      (format stream ",")
+                      (comp-funcall-clang-left-to-right1 stream (+ m 1) n o))))
+              (t 
+               (cond ((>= m (abs n))
+                      (comp-funcall-clang-left-to-right2 stream m o))
+                     (t 
+                       (format stream "arg")
+                       (format-integer stream m 10)
+                       (format stream ",")
+                       (comp-funcall-clang-left-to-right1 stream (+ m 1) n o))))))
+    
+    (defun comp-funcall-clang-left-to-right2 (stream m n)
+        (cond ((> m n) 
+               (format stream "NIL"))
+              (t 
+               (format stream "Fcons(arg")
                (format-integer stream m 10)
                (format stream ",")
-               (comp-funcall-clang-left-to-right1 stream (+ m 1) n))))
-
+               (comp-funcall-clang-left-to-right2 stream (+ m 1) n)
+               (format stream ")"))))
 
 
     (defun comp-funcall-clang (stream x env args tail name global test clos)
@@ -1352,31 +1419,65 @@ double tarai(double x, double y, double z){
 
 
     ;;tail recurcive function call
-    (defun comp-funcall1 (stream x env args tail name global test clos)
-        ;;{temp1=...; temp2=...; ... x=temp1;y=temp2; goto NAMEloop;}
-        (format stream "{~%")
-        (for ((ls (cdr x) (cdr ls))
-              (n 1 (+ n 1)) )
-             ((null ls)
-              t )
-             (format stream "temp")
-             (format-integer stream n 10)
-             (format stream " = ")
-             (comp stream (car ls) env args nil name global test clos)
-             (format stream ";~%"))
-        (if (not optimize-enable)
-            (gen-shelterpop stream args))
-        (for ((ls args (cdr ls))
-              (n 1 (+ n 1)) )
-             ((null ls)
-              t )
-             (format-object stream (conv-name (car ls)) nil)
-             (format stream " = temp")
-             (format-integer stream n 10)
-             (format stream ";~%"))
-        (format stream "goto ")
-        (format-object stream (conv-name name) nil)
-        (format stream "loop;}"))
+    ;;{temp1=...; temp2=...; ... x=temp1;y=temp2; goto NAMEloop;}
+    (defun comp-funcall1 (stream x env args tail name global test clos) 
+        (let ((n (cdr (assoc (car x) function-arg))))
+            (format stream "{~%")
+            (for ((ls (cdr x) (cdr ls))
+                  (m 1 (+ m 1)) )
+                 ((null ls) t )
+                 (format stream "temp")
+                 (format-integer stream m 10)
+                 (format stream " = ")
+                 (comp stream (car ls) env args nil name global test clos)
+                 (format stream ";~%")
+                 (format stream "Fshelterpush(temp")
+                 (format-integer stream m 10)
+                 (format stream ");~%"))
+            (for ((ls (cdr x) (cdr ls)))
+                 ((null ls) t )
+                 (format stream "Fshelterpop();~%"))     
+            (if (not optimize-enable)
+                (gen-shelterpop stream args))
+            (cond ((>= n 0)
+                   (for ((ls args (cdr ls))
+                         (m 1 (+ m 1)) )
+                        ((null ls) t )
+                        (format-object stream (conv-name (car ls)) nil)
+                        (format stream " = temp")
+                        (format-integer stream m 10)
+                        (format stream ";~%"))
+                   (format stream "goto ")
+                   (format-object stream (conv-name name) nil)
+                   (format stream "loop;}"))
+                  (t 
+                   (for ((ls (remove ':rest (remove '&rest args)) (cdr ls))
+                         (m 1 (+ m 1)))
+                        ((>= m (abs n))
+                         (format-object stream (conv-name (car ls)) nil)
+                         (format stream " = ")
+                         (comp-funcall11 stream m (length (cdr x)))
+                         (format stream ";~%"))
+                        (format-object stream (conv-name (car ls)) nil)
+                        (format stream " = temp")
+                        (format-integer stream m 10)
+                        (format stream ";~%"))
+                   (format stream "goto ")
+                   (format-object stream (conv-name name) nil)
+                   (format stream "loop;}")))))
+    
+
+    ;;tail call with rest parameter
+    (defun comp-funcall11 (stream m n)
+        (cond ((> m  n)
+               (format stream "NIL"))
+              (t 
+                (format stream "Fcons(temp")
+                (format-integer stream m 10)
+                (format stream ",")
+                (comp-funcall11 stream (+ m 1) n)
+                (format stream ")"))))
+
     
     ;;funcall for not SUBR function.
     ;;apply(func,args)
@@ -1666,7 +1767,7 @@ double tarai(double x, double y, double z){
                (comp-cond1 stream (cdr x) env args tail name global test clos))))
     
     (defun comp-cond2 (stream x env args tail name global test clos)
-        (when (null x) (error* "cond: illegal form" x))
+        (when (null x) (error* "cond: illegal form*" x))
         (cond ((null (cdr x))
                (if (and (not (tailcallp (car x) t name)) (not (not-need-res-p (car x))))
                    (format stream "res = "))
@@ -2240,11 +2341,16 @@ double tarai(double x, double y, double z){
     
     ;;add code0 stream #include C code.
     (defun comp-c-include (x)
-        (unless (= (length x) 2) (error* "c-include: illegal form" x))
+        (unless (or (= (length x) 2) (= (length x) 3)) (error* "c-include: illegal form" x))
         (unless (stringp (elt x 1)) (error* "c-include: argument must be string" x))
-        (format code0 "#include ")
-        (format code0 (elt x 1))
-        (format code0 "~%"))
+        (cond ((and (= (length x) 3) (eq (self-introduction) (elt x 2)))
+               (format code0 "#include ")
+               (format code0 (elt x 1))
+               (format code0 "~%"))
+              ((= (length x) 2)
+               (format code0 "#include ")
+               (format code0 (elt x 1))
+               (format code0 "~%"))))
     
     ;;add code2 stream C define
     (defun comp-c-define (x)
@@ -2265,7 +2371,12 @@ double tarai(double x, double y, double z){
     
     ;;add compile option
     (defun comp-c-option (x)
-        (setq c-lang-option (elt x 1)))
+        (unless (or (= (length x) 2) (= (length x) 3)) (error* "c-option: illegal form" x))
+        (unless (stringp (elt x 1)) (error* "c-option: argument must be string" x))
+        (cond ((and (= (length x) 3) (eq (self-introduction) (elt x 2)))
+               (setq c-lang-option (elt x 1)))
+              ((= (length x) 2)
+               (setq c-lang-option (elt x 1)))))
     
     ;;defglobal
     (defun comp-defglobal (x)
@@ -2278,7 +2389,7 @@ double tarai(double x, double y, double z){
            (format code4 ");")
            (format code4 "Fset_opt(Fmakesym(\"")
            (format-object code4 symbol nil)
-           (format code4 "\"),FAST_GLOBAL);~%")))
+           (format code4 "\"),GLOBAL);~%")))
     
     ;;defconstant
     (defun comp-defconstant (x)
@@ -2291,7 +2402,7 @@ double tarai(double x, double y, double z){
            (format code4 ");")
            (format code4 "Fset_opt(Fmakesym(\"")
            (format-object code4 symbol nil)
-           (format code4 "\"),FAST_CONSTN);~%")))
+           (format code4 "\"),CONSTN);~%")))
     
     ;;defdynamic
     (defun comp-defdynamic (x)
@@ -2345,24 +2456,8 @@ double tarai(double x, double y, double z){
                               (elt x 2)
                               (elt x 3)))
                       (res (assoc name generic-name-arg)) )
-                   (when (null res) (error* "not exist defgeneric " name))
-                   (unless
-                    (has-same-varlis-p arg (cdr res))
-                    (error* "args variable name must be same" (list arg (cdr res))))))))
-    
-    (defun has-same-varlis-p (x y)
-        (cond ((and (null x) (null y)) t)
-              ((and (null x) (not (null y))) nil)
-              ((and (not (null x)) (null y)) nil)
-              ((and (symbolp (car x)) (symbolp (car y)) (eq (car x) (car y)))
-               (has-same-varlis-p (cdr x) (cdr y)))
-              ((and (consp (car x)) (consp (car y)) (eq (elt (car x) 0) (elt (car y) 0)))
-               (has-same-varlis-p (cdr x) (cdr y)))
-              ((and (consp (car x)) (symbolp (car y)) (eq (elt (car x) 0) (car y)))
-               (has-same-varlis-p (cdr x) (cdr y)))
-              ((and (symbolp (car x)) (consp (car y)) (eq (car x) (elt (car y) 0)))
-               (has-same-varlis-p (cdr x) (cdr y)))
-              (t nil)))
+                   (when (null res) (error* "not exist defgeneric " name))))))
+
     
     ;;ex prime-factors -> prime_factors
     (defun conv-name (sym)
@@ -2802,7 +2897,7 @@ double tarai(double x, double y, double z){
               (body (cdr (cdr x)) (cdr body)) )
              ((null body)
               t )
-             (let ((sexp (substitute (car body) name nil)))
+             (let ((sexp (modulesubst (car body) name nil)))
                 (if (and (consp sexp) (eq (car sexp) 'defun))
                     (inference-defun sexp)))))
 
@@ -3470,5 +3565,7 @@ double tarai(double x, double y, double z){
     (assert quotient (class <float>) (class <number>) (class <number>))
     (assert subrp (class <object>) (class <object>))
     (assert c-lang (class <null>) (class <string>))
-    (assert substitute (class <object>) (class <object>) (class <symbol>) (class <symbol>))
+    (assert modulesubst (class <object>) (class <object>) (class <symbol>) (class <symbol>))
+
 )
+
