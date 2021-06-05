@@ -84,7 +84,7 @@ $ eisl -c  # -cオプションを付けて起動する。
 ### 使用例
 
 ```console
-$ eisl -c
+eisl -c
 Easy-ISLisp Ver1.6
 > (compile-file "tests/tarai.lsp")
 type inference
@@ -114,10 +114,9 @@ Elapsed Time(second)=0.024106
 > (time (ack 4 1))
 Elapsed Time(second)=3.728262
 <undef>
->
+
 ```
 
-Ra
 
 ## CUDA
 現在、CUDAを利用した関数を整備しています。

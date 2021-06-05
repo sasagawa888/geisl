@@ -69,7 +69,7 @@ key-bindings are as follows:
 - Esc Tab completion
 
 # Goal
-I hope that Lisp will become more popular. I hope many people enjoy Lisp. EISL aims at easy handling.
+GEISL aims at easy handling of GPGPU.
 
 # Compiler
 EISL has a compiler. it generates GCC code and generates object code.
@@ -86,45 +86,36 @@ or (import "compiler") in REPL
 (load "foo.o")
 
 example
-eisl -c
-Easy-ISLisp Ver1.6
+~/geisl$ geisl
+GEasy-ISLisp Ver0.90
+> (import "compiler")
+T
 > (compile-file "tests/tarai.lsp")
 type inference
 initialize
 pass1
 pass2
-compiling PACK
-compiling TARAI
-compiling FIB
-compiling FIB*
-compiling ACK
-compiling GFIB
-compiling TAK
-compiling LISTN
-compiling TAKL
-compiling CTAK
-compiling CTAK-AUX
-
+compiling TARAI 
+compiling TARAI* 
+compiling FIB 
+compiling FIB* 
+compiling ACK 
+compiling GFIB 
+compiling TAK 
+compiling LISTN 
+compiling TAKL 
+compiling CTAK 
+compiling CTAK-AUX 
 finalize
-invoke GCC
+invoke CC
 T
 > (load "tests/tarai.o")
 T
 > (time (tarai 12 6 0))
-Elapsed Time(second)=0.024106
+Elapsed Time(second)=0.025118
 <undef>
-> (time (ack 4 1))
-Elapsed Time(second)=3.728262
-<undef>
->
+> 
 ```
-
-
-
-# Compile EISL by CUDA
-You can also compile EISL with nvcc(CUDA) instead of gcc.
-
-On linux terminal type "make -f cudamake" and "sudo make install"
 
 Now, I am adding function using CUDA
 
