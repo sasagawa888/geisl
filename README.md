@@ -10,8 +10,31 @@ see [ISLisp](https://en.wikipedia.org/wiki/ISLISP)
 # Installation
 Change to the git cloned or downloaded Easy-ISLisp directory.
 
-In Linux  type "make". And type "sudo make install".
+In Linux  type "rm *.o" , "make". And type "sudo make install".
 
+```console
+$ rm *.o
+$ make
+gcc  -O3  -c main.c -o main.o
+gcc  -O3  -c function.c -o function.o
+nvcc -c extension.c -o extension.o
+gcc  -O3  -c syntax.c -o syntax.o
+gcc  -O3  -c data.c -o data.o
+gcc  -O3  -c gbc.c -o gbc.o
+gcc  -O3  -c cell.c -o cell.o
+gcc  -O3  -c error.c -o error.o
+gcc  -O3  -c bignum.c -o bignum.o
+gcc  -O3  -c compute.c -o compute.o
+gcc  -O3  -c edit.c -o edit.o
+nvcc -c gpgpu.c -o gpgpu.o
+nvcc -c kernel.cu -o kernel.o
+nvcc  -O3  main.o function.o extension.o syntax.o data.o gbc.o cell.o error.o bignum.o compute.o edit.o gpgpu.o kernel.o -o geisl -lm -ldl -lcublas 
+$ sudo make install
+[sudo] password for sasagawa:               
+install -Dm755 geisl /usr/local/bin/geisl
+
+
+```
 
 # Invoke
 
