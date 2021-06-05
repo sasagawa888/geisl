@@ -1,50 +1,28 @@
-# Easy-ISLisp
+# GEasy-ISLisp
 
-Easy-ISLisp (EISL) はISLisp標準の解釈実行器及び翻訳系です。
-
-Kenichi Sasagawa氏が制作しました（[Easy-ISLispのコンパイラ - Qiita](https://qiita.com/sym_num/items/793adfe118514668e5b0)）。
-
-ISLispについては英語版Wikipedia（[ISLisp](https://en.wikipedia.org/wiki/ISLISP)）もご覧下さい。
-
-次の動画ではEISLの紹介と導入方法の説明を行っています（英語）
-[![Introduction of Easy-ISLisp](http://img.youtube.com/vi/KfrRyKMcTw8/0.jpg)](https://youtu.be/KfrRyKMcTw8)
-
-
+GEasy-ISLisp (GEISL) はISLisp標準の解釈実行器及び翻訳系です。
+GEasy-ISLispはCUDAにより動作します。
+Kenichi Sasagawa氏が制作しました
 ## 導入方法
 
 1. Gitでクローンした，又は単にダウンロードしたEasy-ISLispのディレクトリに移動する。
-1. GNU/Linuxをお使いの場合: 端末上で`sudo make install`と入力する。
-注意　ver1.4以後はWindowsはサポートされません。WindowsでWSLをお使いください。
-　　　広く多くの人にLispを知っていただくためにWindowsもサポートしてきました。
-　　　しかし、WSLを無償で使うことができるようになりました。Windowsでも手軽にLinux環境が手に入ります。
-
-
-動作確認している環境は次の通りです。
-- Ubuntu 16.04 GCC 5.4
-- Ubuntu 18.04 GCC 7.3
-- Raspberry Pi3 Raspbian GCC 6.3
-- openSUSE Leap 42.3 GCC 4.8.5
-- Debian GNU/Linux GCC 6.3 GCC 7.3
-- Linux Mint GCC ver 5.4
-- Linux Mint GCC ver9.3.0
-- macOS 11.1 clang 12.0.0 
-- OpenBSD
+1. GNU/Linuxをお使いの場合: 端末上で`make`と入力し、さに `sudo make install`と入力する。
 
 
 ## 実行
 
-* GNU/Linuxをお使いの場合: 端末上で`eisl`と入力する。
+* GNU/Linuxをお使いの場合: 端末上で`geisl`と入力する。
 
 Linux版では，対話状態で編集ができます。
 編集機能を無効にしたい場合は，`-r`オプションを付けて起動して下さい。
 ```console
-$ eisl -r
+$ geisl -r
 ```
 
 他の起動オプショオンについては下記を参照してください。
 
 ```
-$ eisl -h
+$ geisl -h
 List of options:
 -c           -- EISL starts after reading compiler.lsp.
 -f           -- EISL starts after reading formatter.lsp.
@@ -142,16 +120,9 @@ Elapsed Time(second)=3.728262
 >
 ```
 
-翻訳系自身を翻訳することができます。
-翻訳はずっと早くなります。
+Ra
 
-Raspberry Pi 3では，主記憶領域不足のせいで`compiler.o`ファイルが利用できません。
-`compiler.lsp`を使って下さい。
-
-## CUDAでEISLをコンパイルする
-GCCの代わりにnvcc（CUDA)でEISLをコンパイルすることもできます。
-端末から　`make -f cudamake`  さらに　`sudo make install` とタイプしてください。
-
+## CUDA
 現在、CUDAを利用した関数を整備しています。
 
 参照 tests/gpu.lsp

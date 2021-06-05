@@ -1,41 +1,16 @@
-OPSYS ?= linux
-CC ?= cc
-LD := $(CC)
-ifneq ($(OPSYS),macos)
-	ifeq ($(OPSYS),openbsd)
-		LIBS = -lm
-	else
-		LIBS = -lm -ldl
-	endif
-endif
+CC := gcc
+NVCC := nvcc
+LIBS = -lm -ldl -lcublas
 LIBSRASPI = -lm -ldl -lwiringPi
 INCS =  
-CFLAGS ?= $(INCS) -Wall -Wextra -D_FORTIFY_SOURCE=2
-ifeq ($(DEBUG),1)
-	CFLAGS += -O0 -g
-else
-	CFLAGS += -O3 -flto
-endif
-ifeq ($(CC),c++)
-	CFLAGS += -std=c++98 -fno-exceptions -fno-rtti -Weffc++
-else
-	CFLAGS += -std=c17
-endif
-ifneq ($(DEBUG),1)
-	LDFLAGS := -flto
-	ifeq ($(OPSYS),macos)
-		LDFLAGS += -Wl,-S,-x
-	else
-		LDFLAGS += -s
-	endif
-endif
+CFLAGS ?= $(INCS) -O3 
 PREFIX = /usr/local
 bindir = $(PREFIX)/bin
 DESTDIR = 
 INSTALL = install
-INSTALL_PROGRAM = $(INSTALL) -m755
+INSTALL_PROGRAM = $(INSTALL) -Dm755
 
-EISL = eisl
+EISL = geisl
 EDLIS = edlis
 
 FILES = library
@@ -50,28 +25,38 @@ EISL_OBJS = main.o \
 	error.o \
 	bignum.o \
 	compute.o \
-	edit.o
+	edit.o \
+	gpgpu.o \
+	kernel.o
 
-all: eisl edlis
+all: geisl edlis
 
-eisl:
+geisl:
 ifeq  ($(shell uname -n),raspberrypi)
-eisl1: $(EISL_OBJS) $(EISL)
+geisl1: $(EISL_OBJS) $(EISL)
 $(EISL): $(EISL_OBJS)
 	$(CC) $(CFLAGS) $(EISL_OBJS) -o $(EISL) $(LIBSRASPI) 
 else
-eisl2: $(EISL_OBJS) $(EISL)
+geisl2: $(EISL_OBJS) $(EISL)
 $(EISL): $(EISL_OBJS)
-	$(LD) $(LDFLAGS) $(EISL_OBJS) -o $(EISL) $(LIBS) 
+	$(NVCC) $(CFLAGS) $(EISL_OBJS) -o $(EISL) $(LIBS) 
 endif
 
 
+kernel.o : 
+	nvcc -c kernel.cu -o kernel.o
+
+gpgpu.o :
+	nvcc -c gpgpu.c -o gpgpu.o
+
+extension.o :
+	nvcc -c extension.c -o extension.o
 
 %.o: %.c eisl.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 edlis : edlis.o
-	$(LD) $(LDFLAGS) edlis.o -o edlis
+	$(CC) $(CFLAGS) edlis.o -o edlis
 edlis.o : edlis.c edlis.h
 	$(CC) $(CFLAGS) -c edlis.c
 
@@ -85,13 +70,9 @@ uninstall:
 	rm $(DESTDIR)$(bindir)/$(EDLIS)
 
 
-
 .PHONY: clean
-clean:
+clean: -lm
 	rm -f *.o
-	rm eisl
+	rm geisl
 	rm edlis
 
-.PHONY: check
-check:
-	cppcheck --enable=all --std=c11 --library=posix .
