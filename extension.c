@@ -38,7 +38,7 @@ void initexsubr(void){
     defsubr("C-OPTION",f_ignore);
     defsubr("HEAPDUMP",f_heapdump);
     defsubr("INSTANCE",f_instance);
-    defsubr("SUBSTITUTE",f_substitute);
+    defsubr("MODULESUBST",f_modulesubst);
     defsubr("LINE-ARGUMENT",f_line_argument);
     
 
@@ -393,13 +393,13 @@ int f_instance(int arglist){
 }
 
 
-int f_substitute(int arglist){
+int f_modulesubst(int arglist){
     int arg1,arg2;
 
     arg1 = car(arglist);
     arg2 = cadr(arglist);
 
-    return(substitute(arg1,arg2,NIL));
+    return(modulesubst(arg1,arg2,NIL));
 }
 
 int f_line_argument(int arglist)
