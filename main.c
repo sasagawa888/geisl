@@ -231,10 +231,7 @@ char builtin[200][32] ={
 char extended[70][30] = {
 {"random-real"},{"random"},{"heapdump"},{"instance"},
 {"nconc"},{"fast-address"},{"macroexpand-1"},{"macroexpand-all"},{"backtrace"},
-{"break"},{"edit"},{"set-editor"},{"wiringpi-setup-gpio"},{"delay-microseconds"},
-{"wiringpi-spi-setup-ch-speed"},{"pwm-set-mode"},{"pwm-set-range"},
-{"pwm-set-clock"},{"pin-mode"},{"digital-write"},{"digital-read"},
-{"pwm-write"},{"pull-up-dn-control"},{"delay"},{"compile-file"},{"compile-cuda"},{"formatter"},
+{"break"},{"compile-file"},{"compile-cuda"},{"formatter"},
 {"c-include"},{"c-define"},{"c-lang"},{"c-option"},
 {"gpu-mult"},{"gpu-add"},{"gpu-sub"},{"gpu-smult"},{"gpu-emult"},{"gpu-convolute"},{"gpu-deconvolute"},{"gpu-transpose"},
 {"gpu-ident"},{"gpu-full"},{"gpu-unfull"},{"gpu-accuracy"},{"gpu-correct"},{"gpu-activate"},{"gpu-trace"},
@@ -554,7 +551,7 @@ void gettoken(void){
                             stok.type = ARRAY;
                             break;
                         }
-                        if(c == 'f' || c =='F'){
+                        else if(c == 'f' || c =='F'){
                             stok.type = FARRAY;
                             break;
                         }

@@ -1081,21 +1081,6 @@ int f_symbol_class(int arglist);
 void setcolor(int n);
 int getch();
 int f_edit(int arglist);
-#ifdef __arm__
-int f_wiringpi_setup_gpio(int arglist);
-int f_wiringpi_spi_setup_ch_speed(int arglist);
-int f_pwm_set_mode(int arglist);
-int f_pwm_set_range(int arglist);
-int f_pwm_set_clock(int arglist);
-int f_pin_mode(int arglist);
-int f_digital_write(int arglist);
-int f_digital_write_byte(int arglist);
-int f_pwm_write(int arglist);
-int f_pull_up_dn_control(int arglist);
-int f_digital_read(int arglist);
-int f_delay(int arglist);
-int f_delay_microseconds(int arglist);
-#endif
 
 #ifdef __NVCC__
 int f_dp_mult(int arglist);
