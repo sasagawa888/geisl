@@ -59,10 +59,7 @@ List of options:
 
 
 ## 目標
-
-Lispの知名度が向上することを願っています。
-Lispをもっと多くの人々が楽しんでくれることを願っています。
-EISLは簡単に操作できることを目的にしています。
+GEISLはCUDA利用による高速な行列、テンソル計算、それを応用した深層学習を目標としています。
 
 
 ## 翻訳系
@@ -139,81 +136,6 @@ create-array 組み込み関数を拡張しました。
 例
 ```
 (create-array '(3000 3000) 'rand 'float)
-```
-
-## エディタを起動する
-
-EISLはエディタを備えています。
-エディタを利用するには`edit`関数を用いて下さい。
-
-併せてご覧ください: [sasagawa888/Edlis: Simple CUI editor for Easy-ISLisp](https://github.com/sasagawa888/Edlis)
-
-### 用法
-
-```scheme
-(edit file-name-string)
-```
-
-### 例
-
-```lisp
-(edit "tests/foo.lsp")
-```
-
-
-## WiringPi
-
-Raspberry PiにおいてはEislはWiringPiの組込み関数を含みます。
-
-
-```lisp
-EISL <==================================> C
-(wiringpi-spi-setup ch speed) <===> wiringPiSPISetup (SPI_CH, SPI_SPEED)
-(wiringpi-setup-gpio ) <===> wiringPiSetupGpio()
-(pin-mode n 'output) <====> pinMode(n, OUTPUT) or 'input -> INPUT 'pwm-output -> PWM-OUTPUT
-(digital-write n v) <===> digitalWrite(n, v)
-(digital-write-byte v) <===> digitalWriteByte(value)
-(digital-read pin) <===> digitalRead(pin)
-(delay howlong) <===> void delay(unsigned int howLong)
-(pull-up-dn-control pin pud) <===> pullUpDnControl(pin,pud)
-(pwm-set-mode 'pwm-mode-ms) <===> pwmSetMode(PWM_MODE_MS); or 'pwm-mode-bal -> PWM_MODE_BAL
-(pwm-set-clock n) <===> pwmSetClock(n)
-(pwm-set-range n) <===> pwmSetRange(n)
-(pwm-write pin value) <===> pwmWrite(pin , value)
-```
-
-
-### 例
-
-```lisp
-;; LED点滅
-
-(defglobal pin 5)
-(defglobal flag nil)
-
-(defun test (n)
-   (cond ((null flag) (wiringpi-setup-gpio)(setq flag t)))
-   (pin-mode pin 'output)
-   (for ((i 0 (+ i 1)))
-        ((> i n) t)
-        (digital-write pin 1)
-        (delay 1000)
-        (digital-write pin 0)
-        (delay 1000)))
-
-
-;; サーボモータを制御する。
-;; SG90 Micro servo Digital 9g
-
-(defun setup ()
-  (cond ((null flag) (wiringpi-setup-gpio ) (setq flag t)))
-  (pin-mode 18 'pwm-output)
-  (pwm-set-mode 'pwm-mode-ms)
-  (pwm-set-clock 400)
-  (pwm-set-range 1024))
-
-(defun test (n)
-   (pwm-write 18 n))
 ```
 
 

@@ -1,32 +1,16 @@
-# Easy-ISLisp
+# GEasy-ISLisp
 
-Easy-ISLisp(EISL) is an interpreter and compiler compatible with ISLisp standard.
-EISL was written by Kenichi Sasagawa
-https://qiita.com/sym_num/items/793adfe118514668e5b0
+GEasy-ISLisp(GEISL) is an interpreter and compiler compatible with ISLisp standard.
+GEISL is EISL for GPGPU. It runs with CUDA.
+GEISL was written by Kenichi Sasagawa
+
 
 see [ISLisp](https://en.wikipedia.org/wiki/ISLISP)
-youtube [introduction of Easy-ISLisp](https://www.youtube.com/watch?v=KfrRyKMcTw8&t=330s)
 
 # Installation
 Change to the git cloned or downloaded Easy-ISLisp directory.
 
-In Linux  type "sudo make install".
-In macOS  type "sudo make install OPSYS=macos".
-In OpenBSD  type "sudo make install OPSYS=openbsd".
-
-After version 1.4 Windows OS is not suported. Please use WSL on Windows.
-
-We confirmed operation in the following environments.
-- Ubuntu 16.04 GCC 5.4
-- Ubuntu 18.04 GCC 7.3
-- Raspberry Pi3 Raspbian GCC 6.3
-- Raspberry Pi3 Raspbian GCC 8.3.0
-- openSUSE Leap 42.3 GCC 4.8.5
-- Debian GNU/Linux GCC 6.3 GCC 7.3
-- Linux Mint GCC ver 5.4
-- Linux Mint GCC ver9.3.0
-- macOS 11.1 clang 12.0.0 
-- OpenBSD
+In Linux  type "make". And type "sudo make install".
 
 
 # Invoke
@@ -158,66 +142,6 @@ it can generate array for float. e.g.
 ```
 (create-array '(3000 3000) 'rand 'float)
 ```
-
-# Invoke editor
-edit function invoke Edlis editor.
-see https://github.com/sasagawa888/Edlis
-
-(edit file-name-string) example (edit "foo.lsp")
-
-# WiringPi
-On paspberry PI, Eisl includes system function of WiringPi. 
-
-
-```
-EISL <==================================> C
-(wiringpi-spi-setup ch speed) <===> wiringPiSPISetup (SPI_CH, SPI_SPEED)
-(wiringpi-setup-gpio ) <===> wiringPiSetupGpio()
-(pin-mode n 'output) <====> pinMode(n, OUTPUT) or 'input -> INPUT 'pwm-output -> PWM-OUTPUT
-(digital-write n v) <===> digitalWrite(n, v)
-(digital-write-byte v) <===> digitalWriteByte(value)
-(digital-read pin) <===> digitalRead(pin)
-(delay howlong) <===> void delay(unsigned int howLong)
-(pull-up-dn-control pin pud) <===> pullUpDnControl(pin,pud)
-(pwm-set-mode 'pwm-mode-ms) <===> pwmSetMode(PWM_MODE_MS); or 'pwm-mode-bal -> PWM_MODE_BAL
-(pwm-set-clock n) <===> pwmSetClock(n)
-(pwm-set-range n) <===> pwmSetRange(n)
-(pwm-write pin value) <===> pwmWrite(pin , value)
-```
-
-### Examples.
-
-```
-;;LED on/off
-
-(defglobal pin 5)
-(defglobal flag nil)
-
-(defun test (n)
-   (cond ((null flag) (wiringpi-setup-gpio)(setq flag t)))
-   (pin-mode pin 'output)
-   (for ((i 0 (+ i 1)))
-        ((> i n) t)
-        (digital-write pin 1)
-        (delay 1000)
-        (digital-write pin 0)
-        (delay 1000)))
-
-
-;;control servo moter.
-;;SG90 Micro servo Digital 9g
-
-(defun setup ()
-  (cond ((null flag) (wiringpi-setup-gpio ) (setq flag t)))
-  (pin-mode 18 'pwm-output)
-  (pwm-set-mode 'pwm-mode-ms)
-  (pwm-set-clock 400)
-  (pwm-set-range 1024))
-
-(defun test (n)
-   (pwm-write 18 n))
-```
-
 
 # Functions for debug
 - (trace fn1 fn2 ... fn)

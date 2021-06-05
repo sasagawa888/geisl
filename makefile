@@ -1,7 +1,6 @@
 CC := gcc
 NVCC := nvcc
 LIBS = -lm -ldl -lcublas
-LIBSRASPI = -lm -ldl -lwiringPi
 INCS =  
 CFLAGS ?= $(INCS) -O3 
 PREFIX = /usr/local
@@ -29,18 +28,12 @@ EISL_OBJS = main.o \
 	gpgpu.o \
 	kernel.o
 
-all: geisl edlis
+all: geisl
 
 geisl:
-ifeq  ($(shell uname -n),raspberrypi)
-geisl1: $(EISL_OBJS) $(EISL)
-$(EISL): $(EISL_OBJS)
-	$(CC) $(CFLAGS) $(EISL_OBJS) -o $(EISL) $(LIBSRASPI) 
-else
 geisl2: $(EISL_OBJS) $(EISL)
 $(EISL): $(EISL_OBJS)
 	$(NVCC) $(CFLAGS) $(EISL_OBJS) -o $(EISL) $(LIBS) 
-endif
 
 
 kernel.o : 
@@ -55,24 +48,18 @@ extension.o :
 %.o: %.c eisl.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-edlis : edlis.o
-	$(CC) $(CFLAGS) edlis.o -o edlis
-edlis.o : edlis.c edlis.h
-	$(CC) $(CFLAGS) -c edlis.c
 
-
-install: $(EISL) $(EDLIS)
+install: $(EISL) 
 	$(INSTALL_PROGRAM) $(EISL) $(DESTDIR)$(bindir)/$(EISL)
-	$(INSTALL_PROGRAM) $(EDLIS) $(DESTDIR)$(bindir)/$(EDLIS)
+
 
 uninstall:
 	rm $(DESTDIR)$(bindir)/$(EISL)
-	rm $(DESTDIR)$(bindir)/$(EDLIS)
 
 
 .PHONY: clean
 clean: -lm
 	rm -f *.o
 	rm geisl
-	rm edlis
+
 
