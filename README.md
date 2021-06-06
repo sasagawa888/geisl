@@ -36,6 +36,7 @@ install -Dm755 geisl /usr/local/bin/geisl
 
 ```
 
+
 # Invoke
 
 ```
@@ -93,6 +94,40 @@ key-bindings are as follows:
 
 # Goal
 GEISL aims at easy handling of GPGPU.
+
+# Bench with GPU
+
+NVIDIA GTX-1650
+
+```
+(defglobal z (create-array '(3000 3000) 'rand 'float))
+
+(defun test1 ()
+    (gpu-mult z z) )
+
+(defun test2 (n)
+  (for ((i n (- i 1)))
+       ((< i 0) t)
+       (test1)))
+
+GEasy-ISLisp Ver0.90
+> (time (test1))
+Elapsed Time(second)=0.074256
+<undef>
+> (time (test1))
+Elapsed Time(second)=0.059127
+<undef>
+> (time (test2 10))
+Elapsed Time(second)=0.582411
+<undef>
+> (time (test2 10))
+Elapsed Time(second)=0.540693
+<undef>
+> 
+
+```
+
+
 
 # Compiler
 EISL has a compiler. it generates GCC code and generates object code.
