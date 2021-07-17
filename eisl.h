@@ -1152,7 +1152,9 @@ void backspace_buffer(int col);
 int read_line(int flag);
 
 #ifdef __NVCC__
-int f_gpu_mult(int araglist);
+int f_cuda_version(int arglist);
+int f_cudnn_version(int arglist);
+int f_gpu_mult(int arglist);
 int f_gpu_add(int arglist);
 int f_gpu_sub(int arglist);
 int f_gpu_smult(int arglist);

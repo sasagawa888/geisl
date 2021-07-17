@@ -43,6 +43,8 @@ void initexsubr(void){
     
 
     #ifdef __NVCC__
+    defsubr("CUDA-VERSION",f_cuda_version);
+    defsubr("CUDNN-VERSION",f_cudnn_version);
     defsubr("GPU-ACCURACY",f_gpu_accuracy); 
     defsubr("GPU-ACTIVATE",f_gpu_activate); 
     defsubr("GPU-ADAGRAD",f_gpu_adagrad);

@@ -5,9 +5,21 @@ Easter project GPGPU of Easy-ISLisp
 
 
 #include <cublas.h>
+#include <cuda.h>
+#include <cudnn.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "eisl.h"
+
+
+int f_cuda_version(int arglist){
+    return(makeint((int)CUDA_VERSION));
+}
+
+int f_cudnn_version(int arglist){
+    return(makeint((int)CUDNN_VERSION));
+}
+
 
 
 #define IDX2C(i,j,ld) (((j)*(ld))+(i))
